@@ -1,3 +1,5 @@
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
@@ -155,3 +157,13 @@ class OwnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ("id", "username", "first_name", "last_name", "email")
+
+class OwnerTokenSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if not self.user.is_superuser:
+            raise AuthenticationFailed("Only the owner account can sign in.")
+
+        data["user"] = OwnerSerializer(self.user).data
+        return data
