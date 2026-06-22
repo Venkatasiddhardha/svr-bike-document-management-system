@@ -86,9 +86,8 @@ MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", BASE_DIR / "media"))
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
-    if origin.strip()
+    "http://localhost:5173",
+    "https://svr-bike-document-management-system.vercel.app",
 ]
 
 REST_FRAMEWORK = {
