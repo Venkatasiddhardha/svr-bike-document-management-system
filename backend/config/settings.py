@@ -89,6 +89,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "https://svr-bike-document-management-system.vercel.app",
 ]
+CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
