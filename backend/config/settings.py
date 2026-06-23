@@ -3,6 +3,14 @@ from datetime import timedelta
 from pathlib import Path
 import dj_database_url
 
+import cloudinary
+
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -134,3 +142,4 @@ CLOUDINARY_STORAGE = {
 print("CLOUD NAME =", os.getenv("CLOUDINARY_CLOUD_NAME"))
 print("API KEY =", os.getenv("CLOUDINARY_API_KEY"))
 print("API SECRET EXISTS =", bool(os.getenv("CLOUDINARY_API_SECRET")))
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
