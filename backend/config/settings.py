@@ -130,3 +130,7 @@ CLOUDINARY_STORAGE = {
     "API_KEY": os.getenv("CLOUDINARY_API_KEY"),
     "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
 }
+
+print("CLOUD NAME =", os.getenv("CLOUDINARY_CLOUD_NAME"))
+print("API KEY =", os.getenv("CLOUDINARY_API_KEY"))
+print("API SECRET EXISTS =", bool(os.getenv("CLOUDINARY_API_SECRET")))
