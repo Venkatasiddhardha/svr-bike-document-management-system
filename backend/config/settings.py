@@ -2,15 +2,9 @@ import os
 from datetime import timedelta
 from pathlib import Path
 import dj_database_url
-
 import cloudinary
-
-cloudinary.config(
-    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
-    api_key=os.getenv("CLOUDINARY_API_KEY"),
-    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
-    secure=True
-)
+import cloudinary.uploader
+import cloudinary.api
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -138,7 +132,4 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
 }
 
-print("CLOUD_NAME =", repr(os.getenv("CLOUDINARY_CLOUD_NAME")))
-print("API_KEY =", repr(os.getenv("CLOUDINARY_API_KEY")))
-print("API_SECRET =", repr(os.getenv("CLOUDINARY_API_SECRET")))
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
