@@ -92,7 +92,6 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
-DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CORS_ALLOWED_ORIGINS = [
@@ -139,7 +138,7 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": os.getenv("CLOUDINARY_API_SECRET"),
 }
 
-print("CLOUD NAME =", os.getenv("CLOUDINARY_CLOUD_NAME"))
-print("API KEY =", os.getenv("CLOUDINARY_API_KEY"))
-print("API SECRET EXISTS =", bool(os.getenv("CLOUDINARY_API_SECRET")))
+print("CLOUD_NAME =", repr(os.getenv("CLOUDINARY_CLOUD_NAME")))
+print("API_KEY =", repr(os.getenv("CLOUDINARY_API_KEY")))
+print("API_SECRET =", repr(os.getenv("CLOUDINARY_API_SECRET")))
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
