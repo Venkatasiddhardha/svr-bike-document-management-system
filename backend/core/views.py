@@ -16,6 +16,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.shortcuts import redirect
 
 from .models import ActivityLog, BikeRecord, BusinessSettings, Document, Party, Vehicle, VehicleTransaction
 from .permissions import IsOwner
@@ -122,10 +123,18 @@ class BikeRecordViewSet(AuditedModelViewSet):
             
         
         if field_name not in allowed_fields:
-            return Response({"detail": "Invalid image field."}, status=400)
-        bike = self.get_object()
-        image = getattr(bike, field_name)
-        return FileResponse(image.open("rb"), content_type=f"image/{image.name.rsplit('.', 1)[-1].lower()}")
+            @action(detail=True, methods=["get"], url_path=r"image/(?P<field_name>[^/.]+)")
+            def image(self, request, pk=None, field_name=None):
+                bike = self.get_object()
+
+                image = getattr(bike, field_name)
+
+                if not image:
+                    return Response({"detail": "No image"}, status=404)
+
+                return redirect(image.url)
+            
+            
     @action(
     detail=True,
     methods=["delete"],
