@@ -98,6 +98,7 @@ class BikeRecordViewSet(AuditedModelViewSet):
     def get_queryset(self):
         queryset = BikeRecord.objects.all()
         query = self.request.query_params.get("search", "").strip()
+
         if query:
             queryset = queryset.filter(
                 Q(vehicle_number__icontains=query)
@@ -106,77 +107,84 @@ class BikeRecordViewSet(AuditedModelViewSet):
                 | Q(seller_name__icontains=query)
                 | Q(seller_phone__icontains=query)
             )
+
         return queryset
 
+    @action(detail=True, methods=["get"], url_path=r"image/(?P<field_name>[^/.]+)")
+    def image(self, request, pk=None, field_name=None):
 
-@action(detail=True, methods=["get"], url_path=r"image/(?P<field_name>[^/.]+)")
-def image(self, request, pk=None, field_name=None):
+        allowed_fields = {
+            *[f"rc_photo_{i}" for i in range(1, 6)],
+            *[f"insurance_photo_{i}" for i in range(1, 6)],
+            *[f"pollution_photo_{i}" for i in range(1, 6)],
+            *[f"noc_photo_{i}" for i in range(1, 6)],
+            *[f"buyer_identity_photo_{i}" for i in range(1, 6)],
+            *[f"seller_identity_photo_{i}" for i in range(1, 6)],
+        }
 
-    allowed_fields = {
-        *[f"rc_photo_{i}" for i in range(1, 6)],
-        *[f"insurance_photo_{i}" for i in range(1, 6)],
-        *[f"pollution_photo_{i}" for i in range(1, 6)],
-        *[f"noc_photo_{i}" for i in range(1, 6)],
-        *[f"buyer_identity_photo_{i}" for i in range(1, 6)],
-        *[f"seller_identity_photo_{i}" for i in range(1, 6)],
-    }
+        if field_name not in allowed_fields:
+            return Response(
+                {"detail": "Invalid image field."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-    if field_name not in allowed_fields:
-        return Response(
-            {"detail": "Invalid image field."},
-            status=400,
-        )
+        bike = self.get_object()
 
-    bike = self.get_object()
+        image = getattr(bike, field_name, None)
 
-    image = getattr(bike, field_name, None)
+        if not image:
+            return Response(
+                {"detail": "Image not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-    if not image:
-        return Response(
-            {"detail": "Image not found."},
-            status=404,
-        )
+        return redirect(image.url)
 
-    return redirect(image.url)
+    @action(detail=True, methods=["delete"], url_path=r"image/(?P<field_name>[^/.]+)/delete")
+    def delete_image(self, request, pk=None, field_name=None):
 
+        allowed_fields = {
+            *[f"rc_photo_{i}" for i in range(1, 6)],
+            *[f"insurance_photo_{i}" for i in range(1, 6)],
+            *[f"pollution_photo_{i}" for i in range(1, 6)],
+            *[f"noc_photo_{i}" for i in range(1, 6)],
+            *[f"buyer_identity_photo_{i}" for i in range(1, 6)],
+            *[f"seller_identity_photo_{i}" for i in range(1, 6)],
+        }
 
-@action(detail=True, methods=["delete"], url_path=r"image/(?P<field_name>[^/.]+)/delete")
-def delete_image(self, request, pk=None, field_name=None):
+        if field_name not in allowed_fields:
+            return Response(
+                {"detail": "Invalid image field."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-    allowed_fields = {
-        *[f"rc_photo_{i}" for i in range(1, 6)],
-        *[f"insurance_photo_{i}" for i in range(1, 6)],
-        *[f"pollution_photo_{i}" for i in range(1, 6)],
-        *[f"noc_photo_{i}" for i in range(1, 6)],
-        *[f"buyer_identity_photo_{i}" for i in range(1, 6)],
-        *[f"seller_identity_photo_{i}" for i in range(1, 6)],
-    }
+        bike = self.get_object()
 
-    if field_name not in allowed_fields:
-        return Response(
-            {"detail": "Invalid image field."},
-            status=400,
-        )
+        image = getattr(bike, field_name, None)
 
-    bike = self.get_object()
+        if image:
+            image.delete(save=False)
 
-    image = getattr(bike, field_name, None)
+        setattr(bike, field_name, None)
+        bike.save(update_fields=[field_name])
 
-    if image:
-        image.delete(save=False)
-
-    setattr(bike, field_name, None)
-    bike.save(update_fields=[field_name])
-
-    return Response({"success": True})    
+        return Response({"success": True})
 
     @action(detail=False, methods=["post"], url_path="smart-search")
     def smart_search(self, request):
+
         query = request.data.get("query", "").strip()
+
         if not query:
-            return Response({"interpretation": "Enter a search phrase.", "results": []})
+            return Response(
+                {
+                    "interpretation": "Enter a search phrase.",
+                    "results": [],
+                }
+            )
 
         lowered = query.lower()
+
         role_fields = {
             "buyer": ("buyer_name", "buyer_phone"),
             "seller": ("seller_name", "seller_phone"),
@@ -184,38 +192,82 @@ def delete_image(self, request, pk=None, field_name=None):
             "bike": ("vehicle_number",),
             "number": ("vehicle_number",),
         }
-        selected_role = next((role for role in role_fields if role in lowered.split()), None)
+
+        selected_role = next(
+            (role for role in role_fields if role in lowered.split()),
+            None,
+        )
+
         ignored_words = {
-            "find", "show", "search", "get", "me", "for", "the", "a", "an",
-            "record", "records", "details", "detail", "with", "named", "name",
-            "buyer", "seller", "vehicle", "bike", "number",
+            "find",
+            "show",
+            "search",
+            "get",
+            "me",
+            "for",
+            "the",
+            "a",
+            "an",
+            "record",
+            "records",
+            "details",
+            "detail",
+            "with",
+            "named",
+            "name",
+            "buyer",
+            "seller",
+            "vehicle",
+            "bike",
+            "number",
         }
-        terms = [word for word in lowered.replace(",", " ").split() if word not in ignored_words]
+
+        terms = [
+            word
+            for word in lowered.replace(",", " ").split()
+            if word not in ignored_words
+        ]
+
         search_text = " ".join(terms).strip() or query
+
         if selected_role in {"vehicle", "bike", "number"}:
             search_text = search_text.replace(" ", "")
 
         filters = Q()
+
         fields = role_fields.get(
             selected_role,
-            ("vehicle_number", "buyer_name", "buyer_phone", "seller_name", "seller_phone"),
+            (
+                "vehicle_number",
+                "buyer_name",
+                "buyer_phone",
+                "seller_name",
+                "seller_phone",
+            ),
         )
+
         for field in fields:
             filters |= Q(**{f"{field}__icontains": search_text})
 
         results = BikeRecord.objects.filter(filters)
+
         if not results.exists() and len(terms) > 1:
             fallback = Q()
+
             for term in terms:
                 for field in fields:
                     fallback |= Q(**{f"{field}__icontains": term})
+
             results = BikeRecord.objects.filter(fallback)
 
-        role_label = selected_role.title() if selected_role else "All bike fields"
         return Response(
             {
-                "interpretation": f"{role_label} search for '{search_text}'.",
-                "results": BikeRecordSerializer(results.distinct()[:50], many=True, context={"request": request}).data,
+                "interpretation": f"Search for '{search_text}'",
+                "results": BikeRecordSerializer(
+                    results.distinct()[:50],
+                    many=True,
+                    context={"request": request},
+                ).data,
             }
         )
 
