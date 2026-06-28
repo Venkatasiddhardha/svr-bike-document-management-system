@@ -17,7 +17,8 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.shortcuts import redirect
-
+from rest_framework.response import Response
+from rest_framework.decorators import action
 from .models import ActivityLog, BikeRecord, BusinessSettings, Document, Party, Vehicle, VehicleTransaction
 from .permissions import IsOwner
 from .serializers import (
@@ -107,68 +108,67 @@ class BikeRecordViewSet(AuditedModelViewSet):
             )
         return queryset
 
-    @action(detail=True, methods=["get"], url_path=r"image/(?P<field_name>[^/.]+)")
-    def image(self, request, pk=None, field_name=None):
-        allowed_fields = {
-            *[f"rc_photo_{i}" for i in range(1, 6)],
-            *[f"insurance_photo_{i}" for i in range(1, 6)],
-            *[f"pollution_photo_{i}" for i in range(1, 6)],
-            *[f"noc_photo_{i}" for i in range(1, 6)],
-            *[f"buyer_identity_photo_{i}" for i in range(1, 6)],
-            *[f"seller_identity_photo_{i}" for i in range(1, 6)],
-}
-            
-            
-   
-            
-        
-        if field_name not in allowed_fields:
-            @action(detail=True, methods=["get"], url_path=r"image/(?P<field_name>[^/.]+)")
-            def image(self, request, pk=None, field_name=None):
-                bike = self.get_object()
 
-                image = getattr(bike, field_name)
+@action(detail=True, methods=["get"], url_path=r"image/(?P<field_name>[^/.]+)")
+def image(self, request, pk=None, field_name=None):
 
-                if not image:
-                    return Response({"detail": "No image"}, status=404)
+    allowed_fields = {
+        *[f"rc_photo_{i}" for i in range(1, 6)],
+        *[f"insurance_photo_{i}" for i in range(1, 6)],
+        *[f"pollution_photo_{i}" for i in range(1, 6)],
+        *[f"noc_photo_{i}" for i in range(1, 6)],
+        *[f"buyer_identity_photo_{i}" for i in range(1, 6)],
+        *[f"seller_identity_photo_{i}" for i in range(1, 6)],
+    }
 
-                return redirect(image.url)
-            
-            
-    @action(
-    detail=True,
-    methods=["delete"],
-    url_path=r"image/(?P<field_name>[^/.]+)/delete"
-)
-    def delete_image(self, request, pk=None, field_name=None):
-        
-         allowed_fields = {
-            *[f"rc_photo_{i}" for i in range(1, 6)],
-            *[f"insurance_photo_{i}" for i in range(1, 6)],
-            *[f"pollution_photo_{i}" for i in range(1, 6)],
-            *[f"noc_photo_{i}" for i in range(1, 6)],
-            *[f"buyer_identity_photo_{i}" for i in range(1, 6)],
-            *[f"seller_identity_photo_{i}" for i in range(1, 6)],
-}            
-            
-   
-            
-        
+    if field_name not in allowed_fields:
+        return Response(
+            {"detail": "Invalid image field."},
+            status=400,
+        )
 
-         
-         if field_name not in allowed_fields:
-             return Response({"detail": "Invalid image field."}, status=400)
-         bike = self.get_object()
-         
-         image = getattr(bike, field_name)
-        
-         if image:
-              image.delete(save=False)
-              
-         setattr(bike, field_name, None)
-         bike.save()
+    bike = self.get_object()
 
-         return Response({"success": True})      
+    image = getattr(bike, field_name, None)
+
+    if not image:
+        return Response(
+            {"detail": "Image not found."},
+            status=404,
+        )
+
+    return redirect(image.url)
+
+
+@action(detail=True, methods=["delete"], url_path=r"image/(?P<field_name>[^/.]+)/delete")
+def delete_image(self, request, pk=None, field_name=None):
+
+    allowed_fields = {
+        *[f"rc_photo_{i}" for i in range(1, 6)],
+        *[f"insurance_photo_{i}" for i in range(1, 6)],
+        *[f"pollution_photo_{i}" for i in range(1, 6)],
+        *[f"noc_photo_{i}" for i in range(1, 6)],
+        *[f"buyer_identity_photo_{i}" for i in range(1, 6)],
+        *[f"seller_identity_photo_{i}" for i in range(1, 6)],
+    }
+
+    if field_name not in allowed_fields:
+        return Response(
+            {"detail": "Invalid image field."},
+            status=400,
+        )
+
+    bike = self.get_object()
+
+    image = getattr(bike, field_name, None)
+
+    if image:
+        image.delete(save=False)
+
+    setattr(bike, field_name, None)
+    bike.save(update_fields=[field_name])
+
+    return Response({"success": True})    
 
     @action(detail=False, methods=["post"], url_path="smart-search")
     def smart_search(self, request):
